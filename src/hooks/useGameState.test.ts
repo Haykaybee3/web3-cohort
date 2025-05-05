@@ -9,12 +9,13 @@ describe('useGameState', () => {
       secretNumber: expect.any(Number),
       attemptsLeft: 10,
       status: 'playing',
-      message: 'Make your guess!'
+      message: 'Make your guess!',
+      difficulty: 'medium'
     });
 
     // Verify number is within range
     expect(result.current.gameState.secretNumber).toBeGreaterThanOrEqual(1);
-    expect(result.current.gameState.secretNumber).toBeLessThanOrEqual(100);
+    expect(result.current.gameState.secretNumber).toBeLessThanOrEqual(100); // medium difficulty range
   });
 
   it('should reset game state when resetGame is called', () => {
@@ -25,7 +26,7 @@ describe('useGameState', () => {
       result.current.resetGame();
     });
 
-    expect(result.current.gameState.attemptsLeft).toBe(10);
+    expect(result.current.gameState.attemptsLeft).toBe(10); // medium difficulty attempts
     expect(result.current.gameState.status).toBe('playing');
     // Note: There's a small chance this could fail if we randomly get the same number
     expect(result.current.gameState.secretNumber).not.toBe(initialNumber);
@@ -66,13 +67,14 @@ describe('useGameState', () => {
         result.current.makeGuess(101);
       });
 
-      expect(result.current.gameState.message).toBe('Please enter a valid number between 1 and 100');
-      expect(result.current.gameState.attemptsLeft).toBe(10);
+      const maxRange = 100; // medium difficulty range
+      expect(result.current.gameState.message).toBe(`Please enter a valid number between 1 and ${maxRange}`);
+      expect(result.current.gameState.attemptsLeft).toBe(10); // medium difficulty attempts
       expect(result.current.gameState.status).toBe('playing');
     });
 
     it('should handle game over', () => {
-      const { result } = renderHook(() => useGameState(1));
+      const { result } = renderHook(() => useGameState('hard')); // Using hard difficulty for minimum attempts
       const secretNumber = result.current.gameState.secretNumber;
       const incorrectGuess = secretNumber < 100 ? secretNumber + 1 : secretNumber - 1;
 

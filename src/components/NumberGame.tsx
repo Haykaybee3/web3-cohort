@@ -2,7 +2,7 @@ import React, { useState, FormEvent } from 'react';
 import { useGameState } from '../hooks/useGameState';
 
 export const NumberGame: React.FC = () => {
-  const { gameState, makeGuess, resetGame } = useGameState();
+  const { gameState, makeGuess, resetGame, setDifficulty } = useGameState();
   const [inputValue, setInputValue] = useState('');
 
   const handleSubmit = (e: FormEvent) => {
@@ -25,12 +25,44 @@ export const NumberGame: React.FC = () => {
     }
   };
 
+  const getDifficultyColor = (difficulty: string) => {
+    switch (difficulty) {
+      case 'easy':
+        return 'bg-green-500 hover:bg-green-600';
+      case 'medium':
+        return 'bg-yellow-500 hover:bg-yellow-600';
+      case 'hard':
+        return 'bg-red-500 hover:bg-red-600';
+      default:
+        return 'bg-gray-500 hover:bg-gray-600';
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md mx-auto bg-white rounded-xl shadow-2xl overflow-hidden p-8 space-y-8 transform hover:scale-[1.02] transition-transform duration-300">
         <div className="text-center">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">Number Guessing Game</h1>
-          <p className="text-gray-500 text-sm">Guess a number between 1 and 100</p>
+          <p className="text-gray-500 text-sm">Select difficulty and guess the number!</p>
+        </div>
+
+        <div className="flex justify-center gap-4">
+          {['easy', 'medium', 'hard'].map((diff) => (
+            <button
+              key={diff}
+              onClick={() => setDifficulty(diff as 'easy' | 'medium' | 'hard')}
+              disabled={gameState.status === 'playing'}
+              className={`
+                px-4 py-2 rounded-lg text-white font-medium capitalize
+                ${getDifficultyColor(diff)}
+                ${gameState.difficulty === diff ? 'ring-4 ring-blue-300' : ''}
+                disabled:opacity-50 disabled:cursor-not-allowed
+                transition-all duration-200
+              `}
+            >
+              {diff}
+            </button>
+          ))}
         </div>
 
         <div className={`text-center ${getMessageColor()} text-xl font-semibold p-4 bg-opacity-10 rounded-lg ${gameState.status === 'playing' ? 'animate-bounce' : ''}`}>
