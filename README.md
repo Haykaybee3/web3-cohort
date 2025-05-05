@@ -1,46 +1,96 @@
-# Getting Started with Create React App
+# Number Guessing Game
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A simple but fun number guessing game built with **React** and **TypeScript**. The player must guess a randomly selected number between 1 and 100 within a limited number of attempts. This project was developed with clean Git practices, modular features, and optional enhancements.
 
-## Available Scripts
+## Demo
 
-In the project directory, you can run:
+![game-preview](./public/preview.png) <!-- Replace with actual screenshot if available -->
 
-### `npm start`
+---
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+## **How to Play**
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+1. The game randomly selects a number between 1 and 100.
+2. You have a limited number of guesses depending on the difficulty level.
+3. After each guess, feedback is provided:
+   - Too high
+   - Too low
+   - Correct!
+4. If you guess correctly within the allowed attempts, you win.
+5. Otherwise, the game ends and reveals the correct number.
+6. You can restart the game without reloading the page.
 
-### `npm test`
+---
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## **Features**
 
-### `npm run build`
+- ✅ Generate a random number between 1 and 100
+- ✅ User input via GUI
+- ✅ Feedback after each guess
+- ✅ Track and display remaining attempts
+- ✅ Win/loss message at the end
+- ✅ Restart game functionality
+- ✅ Input validation with error messages
+- ✅ Responsive and styled UI with Tailwind CSS
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### **Optional Features Implemented**
+- 🔥 Difficulty levels (Easy, Medium, Hard)
+- 🔁 Restart game without page reload
+- ⚡ Basic animations and transitions
+- 🧪 Unit tests using React Testing Library & Jest
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+---
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## **Tech Stack**
 
-### `npm run eject`
+- [React](https://reactjs.org/)
+- [TypeScript](https://www.typescriptlang.org/)
+- [Tailwind CSS](https://tailwindcss.com/)
+- [Jest](https://jestjs.io/) + [React Testing Library](https://testing-library.com/)
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+---
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## **Installation**
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+```bash
+# Clone the repo
+git clone https://github.com/your-username/number-guessing-game.git
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+# Move into the project folder
+cd number-guessing-game
 
-## Learn More
+# Install dependencies
+npm install
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+# Run the app
+npm run dev
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+Testing
+
+# Run tests
+npm test
+
+Tests are written for core components like:
+	•	Rendering UI
+	•	Game logic
+	•	Restart and input behaviors
+
+⸻
+
+Future Improvements
+	•	Sound effects and enhanced animations
+	•	Leaderboard to track attempts
+	•	Dark mode
+	•	Deploy to Vercel or Netlify
+
+⸻
+
+License
+
+MIT License — Free to use, modify, and share.
+
+⸻
+
+Author
+
+Built with love by Akinbobola.
