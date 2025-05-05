@@ -1,133 +1,89 @@
 import { useState, useCallback, useEffect } from 'react';
-
-type GameStatus = 'playing' | 'won' | 'lost';
-type Difficulty = 'easy' | 'medium' | 'hard';
-
-interface GameState {
-  secretNumber: number;
-  attemptsLeft: number;
-  status: GameStatus;
-  message: string;
-  difficulty: Difficulty;
-  hintsLeft: number;
-  soundEnabled: boolean;
-  lastGuess: number | null;
-}
-
-const DIFFICULTY_SETTINGS = {
-  easy: { attempts: 15, range: 50, hints: 3 },
-  medium: { attempts: 10, range: 100, hints: 2 },
-  hard: { attempts: 5, range: 200, hints: 1 }
-};
+import { GameState, Difficulty } from '../types/game';
+import { DIFFICULTY_SETTINGS } from '../constants/gameConstants';
+import { generateRandomNumber, validateGuess, getGameMessage } from '../utils/gameUtils';
 
 export const useGameState = (initialDifficulty: Difficulty = 'medium') => {
+  const [error, setError] = useState<string | null>(null);
   const [gameState, setGameState] = useState<GameState>(() => ({
-    secretNumber: Math.floor(Math.random() * DIFFICULTY_SETTINGS[initialDifficulty].range) + 1,
+    secretNumber: generateRandomNumber(initialDifficulty),
     attemptsLeft: DIFFICULTY_SETTINGS[initialDifficulty].attempts,
     status: 'playing',
     message: 'Make your guess!',
-    difficulty: initialDifficulty,
-    hintsLeft: DIFFICULTY_SETTINGS[initialDifficulty].hints,
-    soundEnabled: true,
-    lastGuess: null
+    difficulty: initialDifficulty
   }));
 
-  const getHint = useCallback(() => {
-    if (gameState.hintsLeft <= 0) return;
-
-    const range = DIFFICULTY_SETTINGS[gameState.difficulty].range;
-    const secretNum = gameState.secretNumber;
-    let hint = '';
-
-    // Generate different types of hints
-    const hintTypes = [
-      () => `The number is ${secretNum % 2 === 0 ? 'even' : 'odd'}`,
-      () => `The number is ${secretNum > range/2 ? 'in the upper half' : 'in the lower half'}`,
-      () => `The sum of its digits is ${String(secretNum).split('').reduce((a, b) => a + parseInt(b), 0)}`
-    ];
-
-    hint = hintTypes[Math.floor(Math.random() * hintTypes.length)]();
-
-    setGameState(prev => ({
-      ...prev,
-      hintsLeft: prev.hintsLeft - 1,
-      message: hint
-    }));
-  }, [gameState.hintsLeft, gameState.difficulty, gameState.secretNumber]);
-
-  const toggleSound = useCallback(() => {
-    setGameState(prev => ({
-      ...prev,
-      soundEnabled: !prev.soundEnabled
-    }));
+  useEffect(() => {
+    // Cleanup function to handle any necessary cleanup
+    return () => {
+      setGameState(prev => ({ ...prev, status: 'playing' }));
+      setError(null);
+    };
   }, []);
 
   const makeGuess = useCallback((guess: number) => {
-    if (gameState.status !== 'playing') return;
+    try {
+      if (gameState.status !== 'playing') return;
 
-    const maxRange = DIFFICULTY_SETTINGS[gameState.difficulty].range;
-    if (guess < 1 || guess > maxRange || !Number.isInteger(guess)) {
-      setGameState(prev => ({
-        ...prev,
-        message: `Please enter a valid number between 1 and ${maxRange}`
-      }));
-      return;
-    }
-
-    const newAttemptsLeft = gameState.attemptsLeft - 1;
-    
-    if (guess === gameState.secretNumber) {
-      setGameState(prev => ({
-        ...prev,
-        status: 'won',
-        attemptsLeft: newAttemptsLeft,
-        message: 'Congratulations! You won!'
-      }));
-    } else {
-      const direction = guess < gameState.secretNumber ? 'low' : 'high';
-      if (newAttemptsLeft === 0) {
-        setGameState(prev => ({
-          ...prev,
-          status: 'lost',
-          attemptsLeft: 0,
-          message: `Game Over! The number was ${prev.secretNumber}`
-        }));
-      } else {
-        setGameState(prev => ({
-          ...prev,
-          attemptsLeft: newAttemptsLeft,
-          message: `Too ${direction}! ${newAttemptsLeft} ${newAttemptsLeft === 1 ? 'guess' : 'guesses'} remaining`
-        }));
+      const maxRange = DIFFICULTY_SETTINGS[gameState.difficulty].range;
+      if (!validateGuess(guess, maxRange)) {
+        setError(`Please enter a valid number between 1 and ${maxRange}`);
+        return;
       }
+
+      setError(null);
+      const newAttemptsLeft = gameState.attemptsLeft - 1;
+      const message = getGameMessage(guess, gameState.secretNumber, newAttemptsLeft);
+      
+      setGameState(prev => ({
+        ...prev,
+        attemptsLeft: newAttemptsLeft,
+        status: guess === prev.secretNumber ? 'won' : newAttemptsLeft === 0 ? 'lost' : 'playing',
+        message
+      }));
+    } catch (err) {
+      setError('An error occurred while processing your guess');
+      console.error('Guess error:', err);
     }
   }, [gameState]);
 
   const setDifficulty = useCallback((difficulty: Difficulty) => {
-    setGameState({
-      secretNumber: Math.floor(Math.random() * DIFFICULTY_SETTINGS[difficulty].range) + 1,
-      attemptsLeft: DIFFICULTY_SETTINGS[difficulty].attempts,
-      status: 'playing',
-      message: 'Make your guess!',
-      difficulty
-    });
+    try {
+      setGameState({
+        secretNumber: generateRandomNumber(difficulty),
+        attemptsLeft: DIFFICULTY_SETTINGS[difficulty].attempts,
+        status: 'playing',
+        message: 'Make your guess!',
+        difficulty
+      });
+      setError(null);
+    } catch (err) {
+      setError('An error occurred while changing difficulty');
+      console.error('Difficulty error:', err);
+    }
   }, []);
 
   const resetGame = useCallback(() => {
-    setGameState(prev => ({
-      secretNumber: Math.floor(Math.random() * DIFFICULTY_SETTINGS[prev.difficulty].range) + 1,
-      attemptsLeft: DIFFICULTY_SETTINGS[prev.difficulty].attempts,
-      status: 'playing',
-      message: 'Make your guess!',
-      difficulty: prev.difficulty
-    }));
+    try {
+      setGameState(prev => ({
+        secretNumber: generateRandomNumber(prev.difficulty),
+        attemptsLeft: DIFFICULTY_SETTINGS[prev.difficulty].attempts,
+        status: 'playing',
+        message: 'Make your guess!',
+        difficulty: prev.difficulty
+      }));
+      setError(null);
+    } catch (err) {
+      setError('An error occurred while resetting the game');
+      console.error('Reset error:', err);
+    }
   }, []);
 
   return {
     gameState,
+    error,
     makeGuess,
     resetGame,
-    setDifficulty,
-    getHint,
-    toggleSound
+    setDifficulty
   };
 };
