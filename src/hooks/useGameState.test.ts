@@ -30,4 +30,59 @@ describe('useGameState', () => {
     // Note: There's a small chance this could fail if we randomly get the same number
     expect(result.current.gameState.secretNumber).not.toBe(initialNumber);
   });
+
+  describe('makeGuess', () => {
+    it('should handle correct guess', () => {
+      const { result } = renderHook(() => useGameState());
+      const secretNumber = result.current.gameState.secretNumber;
+
+      act(() => {
+        result.current.makeGuess(secretNumber);
+      });
+
+      expect(result.current.gameState.status).toBe('won');
+      expect(result.current.gameState.message).toBe('Congratulations! You won!');
+      expect(result.current.gameState.attemptsLeft).toBe(9);
+    });
+
+    it('should handle incorrect guess', () => {
+      const { result } = renderHook(() => useGameState());
+      const secretNumber = result.current.gameState.secretNumber;
+      const incorrectGuess = secretNumber < 100 ? secretNumber + 1 : secretNumber - 1;
+
+      act(() => {
+        result.current.makeGuess(incorrectGuess);
+      });
+
+      expect(result.current.gameState.status).toBe('playing');
+      expect(result.current.gameState.attemptsLeft).toBe(9);
+      expect(result.current.gameState.message).toMatch(/Too (high|low)! 9 guesses remaining/);
+    });
+
+    it('should handle invalid guesses', () => {
+      const { result } = renderHook(() => useGameState());
+
+      act(() => {
+        result.current.makeGuess(101);
+      });
+
+      expect(result.current.gameState.message).toBe('Please enter a valid number between 1 and 100');
+      expect(result.current.gameState.attemptsLeft).toBe(10);
+      expect(result.current.gameState.status).toBe('playing');
+    });
+
+    it('should handle game over', () => {
+      const { result } = renderHook(() => useGameState(1));
+      const secretNumber = result.current.gameState.secretNumber;
+      const incorrectGuess = secretNumber < 100 ? secretNumber + 1 : secretNumber - 1;
+
+      act(() => {
+        result.current.makeGuess(incorrectGuess);
+      });
+
+      expect(result.current.gameState.status).toBe('lost');
+      expect(result.current.gameState.attemptsLeft).toBe(0);
+      expect(result.current.gameState.message).toBe(`Game Over! The number was ${secretNumber}`);
+    });
+  });
 });
