@@ -2,6 +2,10 @@
 
 A simple but fun number guessing game built with **React** and **TypeScript**. The player must guess a randomly selected number between 1 and 100 within a limited number of attempts. This project was developed with clean Git practices, modular features, and optional enhancements.
 
+# Demo
+
+<img width="797" alt="Screenshot 2025-05-05 at 9 39 04 pm" src="https://github.com/user-attachments/assets/d1b24785-4752-43ee-997a-daa67744fc50" />
+
 ---
 
 ## **How to Play**
