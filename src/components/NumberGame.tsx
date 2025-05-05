@@ -1,9 +1,49 @@
-import React, { useState, FormEvent } from 'react';
-import { useGameState } from '../hooks/useGameState';
+import React, { useState, FormEvent, useEffect } from 'react';
+import { useGameState, DIFFICULTY_SETTINGS } from '../hooks/useGameState';
+import ReactConfetti from 'react-confetti';
+
+// Helper functions
+const getDifficultyColor = (difficulty: string) => {
+  const colors = {
+    easy: 'bg-green-500 hover:bg-green-600',
+    medium: 'bg-yellow-500 hover:bg-yellow-600',
+    hard: 'bg-red-500 hover:bg-red-600'
+  };
+  return colors[difficulty as keyof typeof colors] || colors.medium;
+};
 
 export const NumberGame: React.FC = () => {
-  const { gameState, makeGuess, resetGame, setDifficulty } = useGameState();
+  const { gameState, makeGuess, resetGame, setDifficulty, getHint } = useGameState();
   const [inputValue, setInputValue] = useState('');
+  const [showConfetti, setShowConfetti] = useState(false);
+
+  useEffect(() => {
+    if (gameState.status === 'won') {
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 5000);
+    }
+  }, [gameState.status]);
+
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (gameState.status !== 'playing') return;
+      
+      const num = parseInt(e.key);
+      if (!isNaN(num)) {
+        setInputValue(prev => prev + num);
+      } else if (e.key === 'Enter' && inputValue) {
+        makeGuess(parseInt(inputValue, 10));
+        setInputValue('');
+      } else if (e.key === 'Backspace') {
+        setInputValue(prev => prev.slice(0, -1));
+      } else if (e.key === 'h' && gameState.hintsLeft > 0) {
+        getHint();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [inputValue, makeGuess, getHint, gameState.status, gameState.hintsLeft]);
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -14,33 +54,16 @@ export const NumberGame: React.FC = () => {
     }
   };
 
-  const getMessageColor = () => {
-    switch (gameState.status) {
-      case 'won':
-        return 'text-green-600';
-      case 'lost':
-        return 'text-red-600';
-      default:
-        return 'text-blue-600';
-    }
-  };
-
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case 'easy':
-        return 'bg-green-500 hover:bg-green-600';
-      case 'medium':
-        return 'bg-yellow-500 hover:bg-yellow-600';
-      case 'hard':
-        return 'bg-red-500 hover:bg-red-600';
-      default:
-        return 'bg-gray-500 hover:bg-gray-600';
-    }
-  };
+  const maxRange = DIFFICULTY_SETTINGS[gameState.difficulty].range;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
+      {showConfetti && <ReactConfetti />}
       <div className="max-w-md mx-auto bg-white rounded-xl shadow-2xl overflow-hidden p-8 space-y-8 transform hover:scale-[1.02] transition-transform duration-300">
+        <div className="text-sm text-gray-500 text-right">
+          Hints left: {gameState.hintsLeft}
+        </div>
+
         <div className="text-center">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">Number Guessing Game</h1>
           <p className="text-gray-500 text-sm">Select difficulty and guess the number!</p>
@@ -65,7 +88,7 @@ export const NumberGame: React.FC = () => {
           ))}
         </div>
 
-        <div className={`text-center ${getMessageColor()} text-xl font-semibold p-4 bg-opacity-10 rounded-lg ${gameState.status === 'playing' ? 'animate-bounce' : ''}`}>
+        <div className="text-center text-xl font-semibold p-4 bg-opacity-10 rounded-lg">
           {gameState.message}
         </div>
 
@@ -85,9 +108,9 @@ export const NumberGame: React.FC = () => {
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               min="1"
-              max="100"
+              max={maxRange}
               disabled={gameState.status !== 'playing'}
-              placeholder="Enter your guess"
+              placeholder={`Enter a number (1-${maxRange})`}
               className="w-full min-w-[200px] rounded-lg border-2 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 px-6 py-4 text-lg disabled:bg-gray-100 disabled:cursor-not-allowed transition-all duration-200"
             />
             <button

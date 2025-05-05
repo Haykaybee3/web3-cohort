@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 type GameStatus = 'playing' | 'won' | 'lost';
 type Difficulty = 'easy' | 'medium' | 'hard';
@@ -9,12 +9,15 @@ interface GameState {
   status: GameStatus;
   message: string;
   difficulty: Difficulty;
+  hintsLeft: number;
+  soundEnabled: boolean;
+  lastGuess: number | null;
 }
 
 const DIFFICULTY_SETTINGS = {
-  easy: { attempts: 15, range: 50 },
-  medium: { attempts: 10, range: 100 },
-  hard: { attempts: 5, range: 200 }
+  easy: { attempts: 15, range: 50, hints: 3 },
+  medium: { attempts: 10, range: 100, hints: 2 },
+  hard: { attempts: 5, range: 200, hints: 1 }
 };
 
 export const useGameState = (initialDifficulty: Difficulty = 'medium') => {
@@ -23,8 +26,41 @@ export const useGameState = (initialDifficulty: Difficulty = 'medium') => {
     attemptsLeft: DIFFICULTY_SETTINGS[initialDifficulty].attempts,
     status: 'playing',
     message: 'Make your guess!',
-    difficulty: initialDifficulty
+    difficulty: initialDifficulty,
+    hintsLeft: DIFFICULTY_SETTINGS[initialDifficulty].hints,
+    soundEnabled: true,
+    lastGuess: null
   }));
+
+  const getHint = useCallback(() => {
+    if (gameState.hintsLeft <= 0) return;
+
+    const range = DIFFICULTY_SETTINGS[gameState.difficulty].range;
+    const secretNum = gameState.secretNumber;
+    let hint = '';
+
+    // Generate different types of hints
+    const hintTypes = [
+      () => `The number is ${secretNum % 2 === 0 ? 'even' : 'odd'}`,
+      () => `The number is ${secretNum > range/2 ? 'in the upper half' : 'in the lower half'}`,
+      () => `The sum of its digits is ${String(secretNum).split('').reduce((a, b) => a + parseInt(b), 0)}`
+    ];
+
+    hint = hintTypes[Math.floor(Math.random() * hintTypes.length)]();
+
+    setGameState(prev => ({
+      ...prev,
+      hintsLeft: prev.hintsLeft - 1,
+      message: hint
+    }));
+  }, [gameState.hintsLeft, gameState.difficulty, gameState.secretNumber]);
+
+  const toggleSound = useCallback(() => {
+    setGameState(prev => ({
+      ...prev,
+      soundEnabled: !prev.soundEnabled
+    }));
+  }, []);
 
   const makeGuess = useCallback((guess: number) => {
     if (gameState.status !== 'playing') return;
@@ -90,6 +126,8 @@ export const useGameState = (initialDifficulty: Difficulty = 'medium') => {
     gameState,
     makeGuess,
     resetGame,
-    setDifficulty
+    setDifficulty,
+    getHint,
+    toggleSound
   };
 };
