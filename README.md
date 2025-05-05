@@ -60,10 +60,10 @@ git clone https://github.com/your-username/number-guessing-game.git
 cd number-guessing-game
 
 # Install dependencies
-npm install
+npm install or npm i
 
 # Run the app
-npm run dev
+npm start
 
 Testing
 
