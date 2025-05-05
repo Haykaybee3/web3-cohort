@@ -1,31 +1,39 @@
 import { useState, useCallback } from 'react';
 
 type GameStatus = 'playing' | 'won' | 'lost';
+type Difficulty = 'easy' | 'medium' | 'hard';
 
 interface GameState {
   secretNumber: number;
   attemptsLeft: number;
   status: GameStatus;
   message: string;
+  difficulty: Difficulty;
 }
 
-export const useGameState = (maxAttempts: number = 10) => {
+const DIFFICULTY_SETTINGS = {
+  easy: { attempts: 15, range: 50 },
+  medium: { attempts: 10, range: 100 },
+  hard: { attempts: 5, range: 200 }
+};
+
+export const useGameState = (initialDifficulty: Difficulty = 'medium') => {
   const [gameState, setGameState] = useState<GameState>(() => ({
-    secretNumber: Math.floor(Math.random() * 100) + 1,
-    attemptsLeft: maxAttempts,
+    secretNumber: Math.floor(Math.random() * DIFFICULTY_SETTINGS[initialDifficulty].range) + 1,
+    attemptsLeft: DIFFICULTY_SETTINGS[initialDifficulty].attempts,
     status: 'playing',
-    message: 'Make your guess!'
+    message: 'Make your guess!',
+    difficulty: initialDifficulty
   }));
 
   const makeGuess = useCallback((guess: number) => {
-    if (gameState.status !== 'playing') {
-      return;
-    }
+    if (gameState.status !== 'playing') return;
 
-    if (guess < 1 || guess > 100 || !Number.isInteger(guess)) {
+    const maxRange = DIFFICULTY_SETTINGS[gameState.difficulty].range;
+    if (guess < 1 || guess > maxRange || !Number.isInteger(guess)) {
       setGameState(prev => ({
         ...prev,
-        message: 'Please enter a valid number between 1 and 100'
+        message: `Please enter a valid number between 1 and ${maxRange}`
       }));
       return;
     }
@@ -58,18 +66,30 @@ export const useGameState = (maxAttempts: number = 10) => {
     }
   }, [gameState]);
 
-  const resetGame = useCallback(() => {
+  const setDifficulty = useCallback((difficulty: Difficulty) => {
     setGameState({
-      secretNumber: Math.floor(Math.random() * 100) + 1,
-      attemptsLeft: maxAttempts,
+      secretNumber: Math.floor(Math.random() * DIFFICULTY_SETTINGS[difficulty].range) + 1,
+      attemptsLeft: DIFFICULTY_SETTINGS[difficulty].attempts,
       status: 'playing',
-      message: 'Make your guess!'
+      message: 'Make your guess!',
+      difficulty
     });
-  }, [maxAttempts]);
+  }, []);
+
+  const resetGame = useCallback(() => {
+    setGameState(prev => ({
+      secretNumber: Math.floor(Math.random() * DIFFICULTY_SETTINGS[prev.difficulty].range) + 1,
+      attemptsLeft: DIFFICULTY_SETTINGS[prev.difficulty].attempts,
+      status: 'playing',
+      message: 'Make your guess!',
+      difficulty: prev.difficulty
+    }));
+  }, []);
 
   return {
     gameState,
     makeGuess,
-    resetGame
+    resetGame,
+    setDifficulty
   };
 };
