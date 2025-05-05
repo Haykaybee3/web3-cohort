@@ -1,112 +1,99 @@
-import React, { useState, FormEvent } from 'react';
+import React, { useState, FormEvent, useCallback, useEffect } from 'react';
 import { useGameState } from '../hooks/useGameState';
+import { GameButton } from './GameButton';
+import type { Difficulty } from '../types/game';
 
 export const NumberGame: React.FC = () => {
-  const { gameState, makeGuess, resetGame, setDifficulty } = useGameState();
+  const { gameState, error, makeGuess, resetGame, setDifficulty } = useGameState();
   const [inputValue, setInputValue] = useState('');
 
-  const handleSubmit = (e: FormEvent) => {
+  // Validate component initialization
+  useEffect(() => {
+    console.log('[NumberGame] Initialized with:', {
+      difficulty: gameState.difficulty,
+      status: gameState.status,
+      attemptsLeft: gameState.attemptsLeft
+    });
+  }, []);
+
+  // Validate state updates
+  useEffect(() => {
+    console.log('[NumberGame] State updated:', {
+      status: gameState.status,
+      attemptsLeft: gameState.attemptsLeft,
+      message: gameState.message
+    });
+  }, [gameState.status, gameState.attemptsLeft, gameState.message]);
+
+  const handleSubmit = useCallback((e: FormEvent) => {
     e.preventDefault();
+    console.log('[NumberGame] Submitting guess:', inputValue);
     const guess = parseInt(inputValue, 10);
     if (!isNaN(guess)) {
+      console.log('[NumberGame] Valid guess:', guess);
       makeGuess(guess);
       setInputValue('');
+    } else {
+      console.log('[NumberGame] Invalid guess:', inputValue);
     }
-  };
-
-  const getMessageColor = () => {
-    switch (gameState.status) {
-      case 'won':
-        return 'text-green-600';
-      case 'lost':
-        return 'text-red-600';
-      default:
-        return 'text-blue-600';
-    }
-  };
-
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case 'easy':
-        return 'bg-green-500 hover:bg-green-600';
-      case 'medium':
-        return 'bg-yellow-500 hover:bg-yellow-600';
-      case 'hard':
-        return 'bg-red-500 hover:bg-red-600';
-      default:
-        return 'bg-gray-500 hover:bg-gray-600';
-    }
-  };
+  }, [inputValue, makeGuess]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md mx-auto bg-white rounded-xl shadow-2xl overflow-hidden p-8 space-y-8 transform hover:scale-[1.02] transition-transform duration-300">
-        <div className="text-center">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Number Guessing Game</h1>
-          <p className="text-gray-500 text-sm">Select difficulty and guess the number!</p>
-        </div>
-
-        <div className="flex justify-center gap-4">
-          {['easy', 'medium', 'hard'].map((diff) => (
-            <button
+    <div className="min-h-screen bg-gray-100 p-4">
+      <div className="max-w-md mx-auto bg-white p-6 rounded shadow">
+        <h1 className="text-2xl font-bold text-center mb-4">Number Guessing Game</h1>
+        
+        <div className="flex justify-center gap-2 mb-4">
+          {(['easy', 'medium', 'hard'] as const).map((diff) => (
+            <GameButton
               key={diff}
-              onClick={() => setDifficulty(diff as 'easy' | 'medium' | 'hard')}
+              onClick={() => setDifficulty(diff)}
               disabled={gameState.status === 'playing'}
-              className={`
-                px-4 py-2 rounded-lg text-white font-medium capitalize
-                ${getDifficultyColor(diff)}
-                ${gameState.difficulty === diff ? 'ring-4 ring-blue-300' : ''}
-                disabled:opacity-50 disabled:cursor-not-allowed
-                transition-all duration-200
-              `}
+              variant={gameState.difficulty === diff ? 'primary' : 'secondary'}
             >
               {diff}
-            </button>
+            </GameButton>
           ))}
         </div>
 
-        <div className={`text-center ${getMessageColor()} text-xl font-semibold p-4 bg-opacity-10 rounded-lg ${gameState.status === 'playing' ? 'animate-bounce' : ''}`}>
-          {gameState.message}
-        </div>
+        {error && (
+          <div className="text-red-500 text-center mb-4">{error}</div>
+        )}
 
-        <div className="text-center">
-          <p className="text-lg font-medium text-gray-700">
-            Attempts left: 
-            <span className="ml-2 inline-flex items-center justify-center h-8 w-8 rounded-full bg-blue-100 text-blue-600">
-              {gameState.attemptsLeft}
-            </span>
-          </p>
+        <div className="text-center mb-4">{gameState.message}</div>
+
+        <div className="text-center mb-4">
+          Attempts left: {gameState.attemptsLeft}
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="flex gap-4">
+          <div className="flex gap-2">
             <input
               type="number"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              min="1"
-              max="100"
               disabled={gameState.status !== 'playing'}
+              className="flex-1 p-2 border rounded"
               placeholder="Enter your guess"
-              className="w-full min-w-[200px] rounded-lg border-2 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 px-6 py-4 text-lg disabled:bg-gray-100 disabled:cursor-not-allowed transition-all duration-200"
             />
-            <button
-              type="submit"
+            <GameButton
+              onClick={() => {}}
               disabled={gameState.status !== 'playing' || !inputValue}
-              className="px-6 py-4 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all duration-200"
+              type="submit"
             >
               Guess
-            </button>
+            </GameButton>
           </div>
         </form>
 
         {gameState.status !== 'playing' && (
-          <button
+          <GameButton
             onClick={resetGame}
-            className="w-full py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg font-semibold hover:from-green-600 hover:to-emerald-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-105"
+            variant="primary"
+            className="w-full mt-4"
           >
             Play Again
-          </button>
+          </GameButton>
         )}
       </div>
     </div>
